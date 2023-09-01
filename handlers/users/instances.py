@@ -1,3 +1,5 @@
+import sys
+
 import aiohttp
 
 from io import BytesIO
@@ -9,44 +11,51 @@ from pyisemail import is_email
 
 from keyboards.default import helpKeyboard
 from keyboards.inline import folderIdKeyboard
+from keyboards.inline import ycTokenKeyboad
 from loader import dp
 from loader import bot
+# States
 from states import UsersQuestion
+from states import FolderId
+from utils.back import manageYC
 
+listAnswers = []
 
 @dp.message_handler(Command("instances"))
 async def bot_start(message: types.Message):
     await message.answer(f'{message.from_user.full_name}. Необходим ваш folderid', reply_markup=ReplyKeyboardRemove())
     await message.answer("Пройдите по ссылке для получения folderid", reply_markup=folderIdKeyboard)
     # Сохраняем первое состояние
-    await UsersQuestion.whats_the_problem.set()
+    await FolderId.id.set()
 
 
-@dp.message_handler(text="Запрос в ТП 🧑‍💻")
+@dp.message_handler(text="Compute Cloud 🧑‍💻")
 async def bot_start(message: types.Message):
     await message.answer(f'{message.from_user.full_name}. Необходим ваш folderid', reply_markup=ReplyKeyboardRemove())
     await message.answer("Пройдите по ссылке для получения folderid", reply_markup=folderIdKeyboard)
     # Сохраняем первое состояние
-    await UsersQuestion.whats_the_problem.set()
+    await FolderId.id.set()
 
 
 # Ответ на первый вопрос и переход в состояние 2
-@dp.message_handler(state=UsersQuestion.whats_the_problem)
+@dp.message_handler(state=FolderId.id)
 async def bot_start(message: types.Message, state: FSMContext):
-    wh_th_problem = message.text
-    await state.update_data(answer1=wh_th_problem)
-    await message.answer(f'{message.from_user.full_name}, опиши свою проблему текстом.')
-    await message.answer('Про скриншот спрошу дальше')
-    await UsersQuestion.description_problem.set()
+    listAnswers.append(message.text)
+    await state.update_data(answer1=message.text)
+    await message.answer(f'{message.from_user.full_name}, Необходим YC token $(yc iam create-token)', reply_markup=ycTokenKeyboad)
+    await FolderId.yc_iam_token.set()
 
 
-@dp.message_handler(text="Есть", state=UsersQuestion)
-async def cancel_request(message: types.Message):
-    await message.answer("Пришли фото", reply_markup=ReplyKeyboardRemove())
-    await UsersQuestion.photo_problem.set()
+@dp.message_handler(state=FolderId.yc_iam_token)
+async def cancel_request(message: types.Message, state: FSMContext):
+    listAnswers.append(message.text)
+    await state.update_data(answer2=message.text)
+    await message.answer("Получаю список машин")
+    manageYC.main_function(listAnswers)
+    await FolderId.yc_list_instances.set()
 
 
-@dp.message_handler(text="Нет", state=UsersQuestion)
+@dp.message_handler(text="Нет", state=FolderId)
 async def cancel_request(message: types.Message, state: FSMContext):
     await state.update_data(photo="None")
     await message.answer(f'{message.from_user.full_name}, оставь свое email!', reply_markup=ReplyKeyboardRemove())
