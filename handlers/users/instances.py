@@ -12,12 +12,14 @@ from pyisemail import is_email
 from keyboards.default import helpKeyboard
 from keyboards.inline import folderIdKeyboard
 from keyboards.inline import ycTokenKeyboad
+from keyboards.inline import render_keyboard
 from loader import dp
 from loader import bot
 # States
 from states import UsersQuestion
 from states import FolderId
-from utils.back import manageYC
+from utils.back import manage_yc
+from utils.back.manage_yc import main_function
 
 listAnswers = []
 
@@ -51,7 +53,8 @@ async def cancel_request(message: types.Message, state: FSMContext):
     listAnswers.append(message.text)
     await state.update_data(answer2=message.text)
     await message.answer("Получаю список машин")
-    manageYC.main_function(listAnswers)
+    list_instances = main_function(listAnswers)
+    await message.answer(f'{message.from_user.full_name}, Список машин', reply_markup=render_keyboard(list_instances))
     await FolderId.yc_list_instances.set()
 
 

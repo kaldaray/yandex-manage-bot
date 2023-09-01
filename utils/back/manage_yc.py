@@ -6,11 +6,11 @@ from .bearer import BearerAuth
 
 
 def structuring_list(list_item):
-    dictonaryOfItems = [
+    dictionary_of_items = [
         list_item["id"],
         list_item["name"],
         list_item["status"]]
-    return dictonaryOfItems
+    return dictionary_of_items
 
 
 def start_instance(instance, token):
@@ -35,7 +35,7 @@ def main_function(listAnswers):
     # Get all Cloud Instances
     instanceRequest = requests.get("https://compute.api.cloud.yandex.net/compute/v1/instances?folderId=" + folderId,
                                    auth=BearerAuth(str(myToken)))
-    listAllInstances = []
+    list_all_instances = []
 
     # Преобразование словаря в JSON-строку
     x = json.dumps(instanceRequest.json())
@@ -43,13 +43,15 @@ def main_function(listAnswers):
     data = json.loads(x)
     # x = json.dumps(instanceRequest.json())
     for line in data.get('instances'):
-        listAllInstances.append(structuring_list(line))
+        list_all_instances.append(structuring_list(line))
         # print(line['name'])
         # print("========")
     # print(data.get('instances'))
 
-    for instance in listAllInstances:
-        print(instance)
+    return list_all_instances
+
+    # for instance in list_all_instances:
+    #     print(instance)
 
 # for instance in instanceRequest:
 #     listAllInstances.append(structuring_list(instance))
